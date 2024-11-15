@@ -72,10 +72,10 @@ class FileChange:
             print(f"Error fetching file content for revision {before_rv}: {e.stderr}")
             return (before_rv, e.stderr)
 
-    def get_hunks_map(self)->Dict[str, str]:
+    def get_hunks_map(self)->Dict[Hunk, Tuple[str, str]]:
         '''
         hunk를 간단하게 block 2 block으로 변경한다.
-        :return: Dict[beforeBlock: str, afterBlock: str]
+        :return: Dict[hunk, beforeBlock: str, afterBlock: str]
         '''
 
         before_source_code, after_source_code = self.read_pair()
@@ -93,7 +93,7 @@ class FileChange:
 
             range_str = f'{hunk.old_start}:{hunk.old_line}-{hunk.new_start}:{hunk.new_line}'
 
-            blocks_map[range_str] = (before_block, after_block)
+            blocks_map[hunk] = (before_block, after_block)
 
         return blocks_map
 

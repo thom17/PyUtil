@@ -2,7 +2,7 @@ import subprocess
 import re
 
 from typing import List, Optional, Union
-from filemanager.svn_diff_data import FileChange, Hunk, Change
+from svn_diff_data import FileChange, Hunk, Change
 
 class SvnDiffParseDatas:
     def __init__(self, diff_output: str, rv: str):
