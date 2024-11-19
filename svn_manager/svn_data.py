@@ -137,6 +137,8 @@ class FileDiff:
             #     print(f"{action_desc}: {changed_file['path']}")
             #
             return changed_files
+        else:
+            return []
 
 
 @dataclass

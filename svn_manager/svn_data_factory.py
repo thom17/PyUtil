@@ -1,7 +1,8 @@
-from svn_data import Log, FileDiff, BlockChanges, LineChanges, DiffActionType
+from svn_manager.svn_data import Log, FileDiff, BlockChanges, LineChanges, DiffActionType
+from svn_manager.svn_dif_Parser import SvnDiffParseDatas
+
 from typing import List, Union
 
-from svn_dif_Parser import SvnDiffParseDatas
 
 def make_logs(path: str) -> List[Log]:
     return Log.from_subprocess_by_path(path)
@@ -51,24 +52,24 @@ def make_line_changes(file_diff: FileDiff) -> List[LineChanges]:
     return line_change_list
 
 
-if __name__ == "__main__":
-    path = r'D:/dev/AutoPlanning/trunk/AP_trunk_pure/mod_APReady/ActuatorCSNerve.cpp'
-    revision_number = 7250
-
-    file_diffs =make_fileDiff(path, revision_number)
-    assert len(file_diffs) == 1, '파일을 경로로 태스트 해야함'
-    block_changes = make_block_changes(file_diffs[0])
-
-    for change in block_changes:
-        print(change)
-
-    line_changes = make_line_changes(file_diffs[0])
-    print(len(line_changes))
-    add_line = []
-    del_line = []
-    for change in line_changes:
-        if change.action == DiffActionType.Add:
-            add_line.append(change)
-        else:
-            del_line.append(change)
-    print('del ',len(del_line), ', add ',len(add_line))
+# if __name__ == "__main__":
+#     path = r'D:/dev/AutoPlanning/trunk/AP_trunk_pure/mod_APReady/ActuatorCSNerve.cpp'
+#     revision_number = 7250
+#
+#     file_diffs =make_fileDiff(path, revision_number)
+#     assert len(file_diffs) == 1, '파일을 경로로 태스트 해야함'
+#     block_changes = make_block_changes(file_diffs[0])
+#
+#     for change in block_changes:
+#         print(change)
+#
+#     line_changes = make_line_changes(file_diffs[0])
+#     print(len(line_changes))
+#     add_line = []
+#     del_line = []
+#     for change in line_changes:
+#         if change.action == DiffActionType.Add:
+#             add_line.append(change)
+#         else:
+#             del_line.append(change)
+#     print('del ',len(del_line), ', add ',len(add_line))

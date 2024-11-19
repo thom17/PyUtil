@@ -1,3 +1,5 @@
+import svn_manager.svn_data_factory as svnFactory
+from typing import Dict, Tuple, List
 import subprocess
 import xml.etree.ElementTree as ET
 from typing import Optional
@@ -5,31 +7,48 @@ from datetime import datetime
 
 import re
 
-from svn_data import Log, FileDiff
-def get_svn_logs(path: str):
+from svn_manager.svn_data import Log, FileDiff
+# from svn_data import Log, FileDiff
 
-
-    file_path_map = {}
-
+def get_svn_logs(path: str) -> Dict[str, Tuple[Log, List[FileDiff]]]:
+    '''
+    log -> List[fileDiff]를 구하는 함수로
+    전반적인 변화, 건드린 파일을 찾는대 사용
+    :param path:
+    :return: [리비전] = (Log, [FileDiff])
+    '''
+    logs_map = {}
     logs = Log.from_subprocess_by_path(path)
+    file_dif_size = 0
 
     for idx, log in enumerate(logs):
         print(f'\r({idx} / {len(logs)}) {log.revision}\t', end="")
         fileDiffList = FileDiff.from_subprocess(path, log.revision)
-        # print(len(fileDiffList))
-    # log_entries = None
-    # log_xml = __get_svn_log_xml(project_a_path)
-    # if log_xml:
-    #     log_entries = parse_svn_log(log_xml)
-    #     print(len(log_entries), "개의 로그")
-    #
-    #     for idx, entry in enumerate(log_entries):
-    #         paths = diff_main(project_a_path, entry['revision'])
-    #         entry['changed_paths'] = paths
-    #
-    #         # print(f"{len(paths)} changes")
-    return logs, fileDiffList
+        logs_map[log.revision] = (log, fileDiffList)
+        file_dif_size += len(fileDiffList)
+    print(f'{len(logs)}) done. {file_dif_size} change file times \t')
 
+    return logs_map
+    # return logs, fileDiffList
+
+def get_line_changes_log_map(file_path: str):
+    logs_map = {}
+    logs = Log.from_subprocess_by_path(file_path)
+    line_change_size = 0
+    for idx, log in enumerate(logs):
+        print(f'\r({idx} / {len(logs)}) {log.revision}\t', end="")
+        fileDiffList = FileDiff.from_subprocess(file_path, log.revision)
+        file_diff = fileDiffList[0]
+        line_changes = svnFactory.make_line_changes(file_diff)
+        logs_map[log.revision] = line_changes
+
+        line_change_size += len(line_changes)
+    print(f'{len(logs)}) done. {line_change_size} change file times \t')
+    return logs_map
+
+
+
+# logs, fileDiffList = get_svn_logs(r'D:\dev\AutoPlanning\trunk\AP_Lib_UI_Task 4289\AppFrame')
 
 # path = r'D:\dev\AutoPlanning\Pano\pano-task\mod_APImplantSimulation'
 # log, diff =  get_svn_logs(path)
@@ -51,7 +70,7 @@ def __get_svn_log_xml(path : str) -> Optional[str]:
 
 
 
-def parse_svn_log(log_xml):
+def __xml_parse_svn_log(log_xml):
     root = ET.fromstring(log_xml)
     log_entries = []
 
@@ -87,7 +106,7 @@ if __name__ == "__main__":
     print(type(result))
     # print(result)
 
-    data = parse_svn_log(result)
+    data = __xml_parse_svn_log(result)
 
 
     with open('pano-task-modeIp-log.xml', "w", encoding="utf-8") as f:
