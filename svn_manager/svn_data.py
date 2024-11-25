@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import List, Union, Dict
+from dataclasses import dataclass, asdict
+from typing import List, Union, Dict, Optional
 from datetime import datetime
 
 from enum import Enum
@@ -30,6 +30,9 @@ class DiffActionType(str, Enum):
         else:
             raise ValueError(f"Unrecognized action code: {action}")
 
+    def __str__(self):
+        return self.value
+
 @dataclass
 class Log:
     revision: str
@@ -37,7 +40,30 @@ class Log:
     date: datetime
     msg: str
 
+    @staticmethod
+    def from_subprocess_by_path_with_range(path: str, start_revision: Union[int, str], end_revision: Optional[Union[int, str]] = None) -> List["Log"]:
+        '''
+        os 측에서 직접 실행하여 로그를 생성.
+        :param path: 경로
+        :param start_revision: 검색을 시작할 리비전 번호 (기본값: None)
+        :return: Log 리스트
+        '''
+        try:
+            # 기본 명령어
+            command = ['svn', 'log', path, '--xml']
 
+            # 특정 리비전부터 검색하도록 -r 옵션 추가
+            if end_revision is not None:
+                command.insert(2, f"-r {start_revision}:{end_revision}")  # HEAD까지 검색
+            else:
+                command.insert(2, f"-r {start_revision}:HEAD")  # HEAD까지 검색
+
+# 명령 실행
+            result = subprocess.run(command, capture_output=True, check=True)
+            return Log.from_xml(result.stdout.decode('utf-8'))
+        except subprocess.CalledProcessError as e:
+            print(f"Error fetching SVN log: {e}")
+            return []
     @staticmethod
     def from_subprocess_by_path(path: str)-> List["Log"]:
         '''
@@ -83,8 +109,13 @@ class Log:
 
 @dataclass
 class FileDiff:
+    '''
+    rv_path  = rv + '#' + filepath
+    '''
+    rv_path: str
     revision: str
     filepath: str
+    repo_path: str
     action: DiffActionType
 
     @staticmethod
@@ -109,8 +140,8 @@ class FileDiff:
                 action = DiffActionType.map_code_to_action(action=action)
                 file_path = match.group(1)
 
-
-                changed_files.append( FileDiff(revision=revision_number, action=action, filepath=file_path))
+                rv_path = revision_number + '#' + file_path
+                changed_files.append( FileDiff(revision=revision_number, action=action, filepath=file_path, rv_path=rv_path))
 
 
         return changed_files
@@ -140,6 +171,11 @@ class FileDiff:
         else:
             return []
 
+    def to_dict(self) -> Dict:
+        # 기본적으로 dataclass의 asdict 사용하되, action은 문자열로 변환
+        data = asdict(self)
+        data['action'] = str(self.action.value)  # action Enum을 문자열로 변환
+        return data
 
 @dataclass
 class BlockChanges:
