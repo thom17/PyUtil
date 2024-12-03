@@ -1,7 +1,7 @@
 from py2neo import Graph, Node, Relationship
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Tuple
 
 # from neo4j import GraphDatabase
 '''
@@ -44,6 +44,49 @@ class Neo4jHandler:
 
         # self.graph.merge(data_node, type_name, "src_name")
 
+    def __data2dict(self, data: Any, check_str: bool = False) -> Dict[str, Any]:
+        '''
+
+        Args:
+            data:
+            check_str:
+
+        Returns:
+
+        '''
+        if hasattr(data, "to_dict") and callable(getattr(data, "to_dict")):
+            data_dict = data.to_dict()
+        elif is_dataclass(data):
+            data_dict = asdict(data)
+        else:
+            raise TypeError("The provided data must either have a 'to_dict' method or be a dataclass.")
+
+        if check_str:
+            for key, value in data_dict.items():
+                if not isinstance(value, str):
+                    data_dict[key] = str(value)
+
+        return data_dict
+
+    def __get_node_name(self, data: Any) -> str:
+        return str(type(data).__name__)
+
+    def data2node(self, data: Any, check_str: bool = False) -> Node:
+        '''
+
+        Args:
+            data:
+            check_str:
+
+        Returns:
+
+        '''
+        type_name = self.__get_node_name(data)
+        data_dict = self.__data2dict(data, check_str)
+        data_node = Node(type_name, **data_dict)
+
+        return data_node
+
     def __save_data_batch(self, data_list: List[dataclass], pid_key: Optional[str]):
           # 데이터 타입 이름 추출
           # 트랜잭션 명시적으로 관리
@@ -51,10 +94,7 @@ class Neo4jHandler:
           try:
               for data in data_list:
                   type_name = str(type(data).__name__)
-                  if hasattr(data, "to_dict") and callable(getattr(data, "to_dict")):
-                      data_dict = data.to_dict()
-                  else:
-                      data_dict = asdict(data)
+                  data_dict = self.__data2dict(data)
                   data_node = Node(type_name, **data_dict)
                   if pid_key:
                       data_node.__primarykey__ = pid_key
@@ -65,6 +105,56 @@ class Neo4jHandler:
           except Exception as e:
               tx.rollback()  # 예외 발생 시 롤백
               raise e
+
+
+    def add_relationship(self, data_list: List[ Tuple [dataclass, dataclass] ], pid_key: Tuple[str, str], rel_type: str, **properties):
+        if isinstance(data_list, List):
+            tx = self.graph.begin()
+            tx.create()
+            self.graph.nodes.match()
+
+        # type_name = str(type(data).__name__)
+
+    def search_node_map(self, datas: Union[dataclass, List[dataclass]]) ->Tuple[Any, List[Node]]:
+        '''
+        원래는 map(dict)이어야 하지만 data들이 hash 되지 않을 수 있음
+        Args:
+            datas: 검색할 객체들
+
+        Returns: List [객체, List[검색결과]]
+
+        '''
+        result_list: List[Tuple[Any, List[Node]]] = []
+        if isinstance(datas, List):
+            for data in datas:
+                result_list.append((data, self.__match_nodes(data)))
+        else:
+            result_list.append((datas, self.__match_nodes(datas)))
+        return result_list
+
+
+    def __match_nodes(self, data: dataclass) -> List[Node]:
+        node_name = self.__get_node_name(data)
+        data_dict:Dict = self.__data2dict(data)
+        return list(self.graph.nodes.match(node_name, **data_dict))
+
+
+    # def add_relationship(self, data_list: List[ Tuple[ Tuple[dataclass, str],  Tuple[dataclass, str]] ], rel_type: str, **properties):
+
+
+    def add_relationship(self, src_data_name, dst_data_name, rel_type, **properties):
+        # 두 노드 찾기
+        src_node = self.graph.nodes.match("data", src_name=src_data_name).first()
+        dst_node = self.graph.nodes.match("data", src_name=dst_data_name).first()
+
+
+
+        if not src_node or not dst_node:
+            raise ValueError(f"Source or destination node not found {src_node} / {dst_node}")
+
+        # 관계 생성
+        relationship = Relationship(src_node, rel_type, dst_node, **properties)
+        self.graph.create(relationship)
 
 
     def do_query(self, query: str)-> List[Dict[str, Any]]:
@@ -92,20 +182,6 @@ class Neo4jHandler:
 
     def delete_all_nodes(self):
         self.graph.delete_all()
-
-    def add_relationship(self, src_data_name, dst_data_name, rel_type, **properties):
-        # 두 노드 찾기
-        src_node = self.graph.nodes.match("data", src_name=src_data_name).first()
-        dst_node = self.graph.nodes.match("data", src_name=dst_data_name).first()
-
-
-
-        if not src_node or not dst_node:
-            raise ValueError(f"Source or destination node not found {src_node} / {dst_node}")
-
-        # 관계 생성
-        relationship = Relationship(src_node, rel_type, dst_node, **properties)
-        self.graph.create(relationship)
 
 
 

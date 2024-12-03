@@ -33,6 +33,33 @@ def test_reset():
     handler.print_info()
 
 
+def test_search():
+    print(test_update)
+
+    handler = Neo4jHandler(uri="bolt://localhost:7687", user="neo4j", password="123456789")
+    handler.delete_all_nodes()
+
+    @dataclass
+    class A:
+        x: int
+        y: int
+        pass
+
+    handler.delete_all_nodes()
+
+    datas = [A( -i, -i ) for i in range(10)]
+    handler.save_data(datas)
+
+
+
+    handler.print_info()
+    node_map = handler.search_node_map(datas)
+    result = node_map[0][1]
+    print((type(result)))
+    print(len(result))
+
+
+
 
 
 def test_update():
