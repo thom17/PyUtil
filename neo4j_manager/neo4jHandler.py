@@ -107,15 +107,49 @@ class Neo4jHandler:
               raise e
 
 
-    def add_relationship(self, data_list: List[ Tuple [dataclass, dataclass] ], pid_key: Tuple[str, str], rel_type: str, **properties):
-        if isinstance(data_list, List):
-            tx = self.graph.begin()
-            tx.create()
-            self.graph.nodes.match()
+    def add_relationship(self, data_list: List[ Tuple [dataclass, dataclass, str] ], **properties):
+        ''' 2024-12-05:
+        입력을 다듬을 필요가 있어보이는대..
+        Args:
+            Tuiple (data, data, rel_nam:str)
+            **properties:
+
+        Returns:
+        '''
+        def convert_node_list(data_list: List[ Tuple [dataclass, dataclass]], self = self) -> List[Tuple[Node, Node]]:
+            convert_nodes = []
+            for idx, (data1, data2, rel_type) in enumerate(data_list):
+                search_map = self.search_node_map([data1, data2])
+                node1_list =search_map[0][1]
+                assert len(node1_list) == 1, f'식별 불가능({len(node1_list)})개 검색됨.\ndata_list[{idx}[0]] {data1}'
+
+                node2_list =search_map[1][1]
+                assert len(node2_list) == 1, f'식별 불가능({len(node2_list)})개 검색됨.\ndata_list[{idx}[1]] {data2}'
+
+                convert_nodes.append((node1_list[0], node2_list[0], rel_type))
+            return convert_nodes
+
+
+        if not isinstance(data_list, List):
+            data_list = [data_list]
+
+        node_list = convert_node_list(data_list=data_list)
+
+        tx = self.graph.begin()
+        try:
+            for node1, node2, rel_type in node_list:
+                relationship = Relationship(node1, rel_type, node2, **properties)
+                tx.create(relationship)
+            tx.commit()
+        except Exception as e:
+            tx.rollback()  # 예외 발생 시 롤백
+            raise e
+
 
         # type_name = str(type(data).__name__)
 
-    def search_node_map(self, datas: Union[dataclass, List[dataclass]]) ->Tuple[Any, List[Node]]:
+
+    def search_node_map(self, datas: Union[dataclass, List[dataclass]]) -> Tuple[Any, List[Node]]:
         '''
         원래는 map(dict)이어야 하지만 data들이 hash 되지 않을 수 있음
         Args:
@@ -133,28 +167,15 @@ class Neo4jHandler:
         return result_list
 
 
-    def __match_nodes(self, data: dataclass) -> List[Node]:
-        node_name = self.__get_node_name(data)
+    def __match_nodes(self, data: dataclass, node_name: Optional[str] = None) -> List[Node]:
+        if node_name is None:
+            node_name = self.__get_node_name(data)
         data_dict:Dict = self.__data2dict(data)
         return list(self.graph.nodes.match(node_name, **data_dict))
 
 
     # def add_relationship(self, data_list: List[ Tuple[ Tuple[dataclass, str],  Tuple[dataclass, str]] ], rel_type: str, **properties):
 
-
-    def add_relationship(self, src_data_name, dst_data_name, rel_type, **properties):
-        # 두 노드 찾기
-        src_node = self.graph.nodes.match("data", src_name=src_data_name).first()
-        dst_node = self.graph.nodes.match("data", src_name=dst_data_name).first()
-
-
-
-        if not src_node or not dst_node:
-            raise ValueError(f"Source or destination node not found {src_node} / {dst_node}")
-
-        # 관계 생성
-        relationship = Relationship(src_node, rel_type, dst_node, **properties)
-        self.graph.create(relationship)
 
 
     def do_query(self, query: str)-> List[Dict[str, Any]]:
@@ -171,10 +192,20 @@ class Neo4jHandler:
         UNWIND labels AS label
         RETURN label, count(*) AS count
         """
+
+        print('Nodes')
         for r in self.do_query(query):
-            print(f'{r["label"]}\t\t:\t{r["count"]} size')
+            print(f'\t{r["label"]}\t\t:\t{r["count"]} size')
 
+        # 관계 정보 출력
+        query_rels = """
+        MATCH ()-[r]->()
+        RETURN type(r) AS rel_type, count(*) AS count
+        """
 
+        print('Relationships')
+        for r in self.do_query(query_rels):
+            print(f'\t{r["rel_type"]}\t\t:\t{r["count"]} size')
 
     def find_node_by_key_value(self, key, value):
         nodes = self.graph.nodes.match("data", **{key: value})

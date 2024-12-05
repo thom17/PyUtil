@@ -47,20 +47,70 @@ def test_search():
 
     handler.delete_all_nodes()
 
-    datas = [A( -i, -i ) for i in range(10)]
+    datas = [A( i, i ) for i in range(10)]
     handler.save_data(datas)
+
+    @dataclass
+    class A:
+        x: int
+        y: int
+        z: int
+        pass
+
+    datas2 = [A( i, i , i**2) for i in range(10)]
+    handler.save_data(datas2)
+
+    @dataclass
+    class AB:
+        x: int
+        y: int
+        pass
+
+    datas2 = [AB(i, i) for i in range(10)]
+    handler.save_data(datas2)
+
 
 
 
     handler.print_info()
     node_map = handler.search_node_map(datas)
+
+    for data, search_list in node_map:
+        print(data)
+        print(search_list)
+        print()
+
+
+
     result = node_map[0][1]
     print((type(result)))
     print(len(result))
 
+def test_relation():
+    print(test_relation)
+    @dataclass
+    class A:
+        x: int
+        y: int
+        pass
 
+    handler = Neo4jHandler(uri="bolt://localhost:7687", user="neo4j", password="123456789")
+    print('delete before')
+    handler.print_info()
 
+    datas = [A(i, i) for i in range(10)]
+    handler.delete_all_nodes()
+    handler.save_data(datas)
+    print('\nafter delete')
+    handler.print_info()
 
+    r_list = []
+    for i in range(10):
+        r_list.append((datas[i], datas[9 - i], f'connect {i%3}'))
+
+    handler.add_relationship(data_list=r_list)
+    print('\nadd relation')
+    handler.print_info()
 
 def test_update():
     print(test_update)
