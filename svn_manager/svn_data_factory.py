@@ -1,5 +1,6 @@
 from svn_manager.svn_data import Log, FileDiff, BlockChanges, LineChanges, DiffActionType
 from svn_manager.svn_dif_Parser import SvnDiffParseDatas
+from svn_manager.svn_subprocess import get_repo_url
 
 from typing import List, Union, Dict
 import subprocess
@@ -13,6 +14,12 @@ def make_logs(path: str) -> List[Log]:
     # to do
 
 def make_fileDiff(path: str, revision: Union[str, int]) -> List[FileDiff]:
+
+    repo_url = get_repo_url(file_path=path)
+    def __convert_url_path(file_path: str) -> str:
+        file_path = file_path.replace(path, repo_url)
+        return file_path
+
     def __subprocess(path: str, revision: Union[str, int]):
         try:
             result = subprocess.run(['svn', 'diff', '--summarize', '-c', str(revision), path], capture_output=True,
@@ -21,31 +28,6 @@ def make_fileDiff(path: str, revision: Union[str, int]) -> List[FileDiff]:
         except subprocess.CalledProcessError as e:
             print(f"Error fetching SVN diff for revision {revision}: {e}")
             return None
-
-    def __get_repo_url(file_path: str) -> str:
-        """
-        로컬 경로에서 리포지토리 URL을 얻는다.
-        """
-        command = ["svn", "info", file_path]
-        print("Executing command:", " ".join(command))  # 명령 출력
-
-        try:
-            # 명령 실행
-            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if result.returncode == 0:
-                # `svn info`의 결과에서 URL 추출
-                for line in result.stdout.splitlines():
-                    if line.startswith("URL:"):
-                        repo_url = line.split("URL:")[1].strip()
-                        print(f"Repository URL: {repo_url}")
-                        return repo_url
-                raise ValueError("URL not found in svn info output")
-            else:
-                print("Error:\n", result.stderr)
-                raise RuntimeError(f"Failed to get SVN info for {file_path}")
-        except Exception as e:
-            print("An error occurred:", e)
-            raise
 
     def __parse_subprocess_diff(diff_output: str, revision_number: Union[str, int]) -> List[Dict[str, str]]:
         changed_files = []
@@ -58,13 +40,18 @@ def make_fileDiff(path: str, revision: Union[str, int]) -> List[FileDiff]:
                 action = DiffActionType.map_code_to_action(action=action)
                 file_path = match.group(1)
 
-                rv_path = revision_number + '#' + file_path
-                repo_path = __get_repo_url(file_path)
+                repo_url = __convert_url_path(file_path=file_path)
+
+                rv_path = revision_number + '#' + repo_url
+
+
                 changed_files.append(
                     FileDiff(revision=revision_number, action=action,
-                             filepath=file_path, rv_path=rv_path, repo_path=repo_path))
+                             filepath=file_path, rv_path=rv_path, repo_path=repo_url))
 
         return changed_files
+
+
 
     revision_number = str(revision)  # 원하는 리비전 번호로 변경
 

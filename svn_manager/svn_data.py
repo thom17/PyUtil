@@ -110,66 +110,13 @@ class Log:
 @dataclass
 class FileDiff:
     '''
-    rv_path  = rv + '#' + filepath
+    rv_path  = rv + '#' + repo_path
     '''
     rv_path: str
     revision: str
     filepath: str
     repo_path: str
     action: DiffActionType
-
-    @staticmethod
-    def __subprocess(path: str, revision: Union[str, int]):
-        try:
-            result = subprocess.run(['svn', 'diff', '--summarize', '-c', str(revision), path], capture_output=True,
-                                    text=True, check=True)
-            return result.stdout
-        except subprocess.CalledProcessError as e:
-            print(f"Error fetching SVN diff for revision {revision}: {e}")
-            return None
-
-    @staticmethod
-    def __parse_subprocess(diff_output: str, revision_number: Union[str, int]) -> List[Dict[str, str]]:
-        changed_files = []
-        diff_lines = diff_output.splitlines()
-
-        for line in diff_lines:
-            match = re.match(r'^[A-Z]\s+(.*)', line)
-            if match:
-                action = line[0]
-                action = DiffActionType.map_code_to_action(action=action)
-                file_path = match.group(1)
-
-                rv_path = revision_number + '#' + file_path
-                changed_files.append( FileDiff(revision=revision_number, action=action, filepath=file_path, rv_path=rv_path))
-
-
-        return changed_files
-
-    @staticmethod
-    def from_subprocess(path: str, revision: Union[str, int]) -> List['FileDiff']:
-        revision_number = revision  # 원하는 리비전 번호로 변경
-
-        diff_output = FileDiff.__subprocess(path, revision_number)
-        if diff_output:
-            changed_files = FileDiff.__parse_subprocess(diff_output, revision_number)
-            # print(f"Changed files in revision {revision_number}:")
-            # for changed_file in changed_files:
-            #     action = changed_file['action']
-            #     action_desc = ''
-            #     if action == 'A':
-            #         action_desc = 'Added'
-            #     elif action == 'D':
-            #         action_desc = 'Deleted'
-            #     elif action == 'M':
-            #         action_desc = 'Modified'
-            #     elif action == 'R':
-            #         action_desc = 'Replaced'
-            #     print(f"{action_desc}: {changed_file['path']}")
-            #
-            return changed_files
-        else:
-            return []
 
     def to_dict(self) -> Dict:
         # 기본적으로 dataclass의 asdict 사용하되, action은 문자열로 변환
