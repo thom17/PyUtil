@@ -231,12 +231,37 @@ def test_all():
     handler.save_data(a)
     handler.save_data(ab)
 
+def test_use_data2node():
+    print(test_use_data2node)
+
+    handler = Neo4jHandler(uri="bolt://localhost:7687", user="neo4j", password="123456789")
+    handler.delete_all_nodes()
+
+    @dataclass
+    class A:
+        x: int
+        y: int
+
+    st = time.time()
+    datas = [A(i, i) for i in range(10)]
+    handler.save_data(datas)
+    ed = time.time()
+    handler.print_info()
+    print(ed-st, "Add A")
+
+    st = time.time()
+    nodes = [(handler.data2node(data), f'A_{data.x}') for data in datas]
+    handler.save_data(nodes)
+    ed = time.time()
+    handler.print_info()
+    print(ed - st, "Add A_ID")
+
 def test_update_relation():
     '''
     Merge 후 Relation 유지 여부 확인
     :return:
     '''
-    print(test_update)
+    print(test_update_relation)
 
     handler = Neo4jHandler(uri="bolt://localhost:7687", user="neo4j", password="123456789")
     handler.delete_all_nodes()

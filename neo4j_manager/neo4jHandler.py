@@ -1,7 +1,7 @@
 from py2neo import Graph, Node, Relationship
 from dataclasses import asdict, dataclass, is_dataclass
 
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Any, Union, Tuple, overload
 
 # from neo4j import GraphDatabase
 '''
@@ -13,6 +13,12 @@ neomodel이 ORM에 더 특화되어 있으나
 아래는 모든 타입에 대하여 사용 가능하도록 고려해본 handeler
 
 '''
+DataInput = Union[
+    dataclass, #단일 dataclass
+    List[dataclass], #다중 dataclass
+    Tuple[dataclass, str], #단일 dataclass와 label
+    List[Tuple[dataclass, str]] #다중 dataclass와 label
+]
 
 class Neo4jHandler:
     def __init__(self, uri, user, password, database="neo4j"):
@@ -24,8 +30,11 @@ class Neo4jHandler:
     def close(self):
         self.graph = None
 
+    data: Union[dataclass, List[dataclass], Tuple[dataclass, str], List[Tuple[dataclass, str]]]
+
     #to do : 여기서 좀 이쁘게 다듬자
-    def save_data(self, data: Union[dataclass, List[dataclass]], pid_key: Optional[str] = None):
+
+    def save_data(self, data: DataInput, pid_key: Optional[str] = None):
         if isinstance(data, List):
             return self.__save_data_batch(data_list=data, pid_key=pid_key)
         else:
@@ -45,22 +54,36 @@ class Neo4jHandler:
         # self.graph.merge(data_node, type_name, "src_name")
 
     def __data2dict(self, data: Any, check_str: bool = False) -> Dict[str, Any]:
-        '''
+        """
+        Converts the provided data to a dictionary.
 
         Args:
-            data:
-            check_str:
+            data (Any): The input data to be converted. It can be a dataclass,
+                        an object with a 'to_dict' method, or a dictionary.
+            check_str (bool): If True, converts all non-string values in the
+                              resulting dictionary to strings.
 
         Returns:
+            Dict[str, Any]: A dictionary representation of the input data.
 
-        '''
-        if hasattr(data, "to_dict") and callable(getattr(data, "to_dict")):
+        Raises:
+            TypeError: If the provided data is not a dictionary, does not have
+                       a 'to_dict' method, and is not a dataclass.
+        """
+        # If data is already a dictionary, use it as is
+        if isinstance(data, dict):
+            data_dict = data
+        # Check if the object has a 'to_dict' method
+        elif hasattr(data, "to_dict") and callable(getattr(data, "to_dict")):
             data_dict = data.to_dict()
+        # Check if the data is a dataclass
         elif is_dataclass(data):
             data_dict = asdict(data)
         else:
-            raise TypeError("The provided data must either have a 'to_dict' method or be a dataclass.")
+            # Raise an error if the data cannot be converted to a dictionary
+            raise TypeError(f"dict을 변환 불가. {type(data)}")
 
+        # Convert non-string values to strings if check_str is True
         if check_str:
             for key, value in data_dict.items():
                 if not isinstance(value, str):
@@ -87,13 +110,19 @@ class Neo4jHandler:
 
         return data_node
 
-    def __save_data_batch(self, data_list: List[dataclass], pid_key: Optional[str]):
+    def __save_data_batch(self, data_list: List[Union[dataclass, Tuple[dataclass, str]]], pid_key: Optional[str]):
           # 데이터 타입 이름 추출
           # 트랜잭션 명시적으로 관리
           tx = self.graph.begin()  # Transaction 시작
           try:
               for data in data_list:
-                  type_name = str(type(data).__name__)
+                  if isinstance(data, Tuple):
+                      type_name = data[1]
+                      data = data[0]
+                  else:
+                    type_name = str(type(data).__name__)
+
+
                   data_dict = self.__data2dict(data)
                   data_node = Node(type_name, **data_dict)
                   if pid_key:
