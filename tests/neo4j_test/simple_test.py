@@ -79,7 +79,15 @@ def test_search():
         print(search_list)
         print()
 
+    datas3 = [(data, f'id_{id(data)}') for data in datas2]
+    handler.save_data(datas3)
 
+    node_map = handler.search_node_map(datas3)
+
+    for data, search_list in node_map:
+        print(data)
+        print(search_list)
+        print()
 
     result = node_map[0][1]
     print((type(result)))

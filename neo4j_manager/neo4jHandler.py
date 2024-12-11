@@ -178,7 +178,7 @@ class Neo4jHandler:
         # type_name = str(type(data).__name__)
 
 
-    def search_node_map(self, datas: Union[dataclass, List[dataclass]]) -> Tuple[Any, List[Node]]:
+    def search_node_map(self, datas: DataInput) -> Tuple[Any, List[Node]]:
         '''
         원래는 map(dict)이어야 하지만 data들이 hash 되지 않을 수 있음
         Args:
@@ -196,10 +196,14 @@ class Neo4jHandler:
         return result_list
 
 
-    def __match_nodes(self, data: dataclass, node_name: Optional[str] = None) -> List[Node]:
-        if node_name is None:
+    def __match_nodes(self, data: Union[dataclass, Tuple[dataclass, str]]) -> List[Node]:
+        if isinstance(data, Tuple):
+            node_name = data[1]
+            data = data[0]
+        else:
             node_name = self.__get_node_name(data)
-        data_dict:Dict = self.__data2dict(data)
+
+        data_dict: Dict = self.__data2dict(data)
         return list(self.graph.nodes.match(node_name, **data_dict))
 
 
