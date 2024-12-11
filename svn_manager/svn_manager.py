@@ -1,5 +1,5 @@
 import svn_manager.svn_data_factory as svnFactory
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Union
 import subprocess
 import xml.etree.ElementTree as ET
 from typing import Optional, Any
@@ -20,6 +20,19 @@ def get_diif_map(path: str, revision) -> Dict[FileDiff, List[Dict[str, Any]]]:
         diff_dict['line'] = svnFactory.make_line_changes(file_diff=file_diff)
         result[file_diff.filepath] = diff_dict
     return result
+
+def do_update(path: str, revision: Union[int, str] = 'HEAD'):
+    return SVNSubprocess.do_update(path, revision)
+
+
+def get_before_change_rv(path: str, revision: Union[int, str]) -> Optional[Union[int, str]]:
+    path = get_repo_url(path)
+    logs = Log.from_subprocess_by_path(path)
+    for log in logs: #내림차순으로 정렬되있음
+        rv_num = int(log.revision) #추후에 문제될수 있음. to do : 리비전 비교 처리.
+        if rv_num < revision:
+            return log.revision
+    return None
 
 
 def get_svn_logs(path: str) -> Dict[str, Tuple[Log, List[FileDiff]]]:
@@ -115,6 +128,41 @@ def __xml_parse_svn_log(log_xml):
         log_entries.append(entry)
 
     return log_entries
+
+
+def is_pulled_path(path: str):
+    return get_current_revision(path) == get_repo_url(path)
+
+def get_current_revision(path: str):
+    """
+    Get the current revision of the specified path.
+    """
+    command = ["svn", "info", path]
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        for line in result.stdout.splitlines():
+            if line.startswith("Revision:") or line.startswith("리비전:"):
+                return int(line.split(":")[1].strip())
+    except subprocess.CalledProcessError as e:
+        print(f"Error retrieving current revision: {e.stderr}")
+        return None
+
+
+def get_head_revision(repo_url: str):
+    """
+    Get the head revision of the specified SVN repository.
+    """
+    repo_url = get_repo_url(repo_url)
+
+    command = ["svn", "info", repo_url]
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        for line in result.stdout.splitlines():
+            if line.startswith("Revision:") or line.startswith("리비전:"):
+                return int(line.split(":")[1].strip())
+    except subprocess.CalledProcessError as e:
+        print(f"Error retrieving head revision: {e.stderr}")
+        return None
 
 
 

@@ -4,8 +4,9 @@
 
 import subprocess
 import xml.etree.ElementTree as ET
-from typing import Optional
+from typing import Optional, Union, List, Dict
 from datetime import datetime
+from collections import defaultdict
 
 
 def get_repo_url(file_path: str) -> str:
@@ -51,3 +52,44 @@ def get_file_at_revision(file_path: str, revision: int) -> str:
             print("Error:\n", result.stderr)
     except Exception as e:
         print("An error occurred:", e)
+
+
+def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[str]]:
+    """
+    Update the given path to the specified revision and return the list of updated files.
+
+    Args:
+        path (str): The file or directory path to update.
+        revision (Union[int, str]): The revision number or 'HEAD' for the latest revision.
+
+    Returns:
+        List[str]: A list of paths that were updated or changed.
+    """
+    # Build the SVN update command
+    command = ["svn", "update", "-r", str(revision), path]
+    print("Executing command:", " ".join(command))
+
+    updated_files_map = defaultdict(list)
+
+    try:
+        # Run the SVN update command
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # Check the result
+        if result.returncode == 0:
+            print("Update successful!")
+            print("Output:\n", result.stdout)
+
+            # Parse updated file paths from the output
+            for line in result.stdout.splitlines():
+                if line.startswith(('A ', 'U ', 'D ', 'R ')):  # Check for SVN status indicators
+                    mod, file_path = line.split()
+                    updated_files_map[mod].append(file_path) # Extract the file path
+
+        else:
+            print("Error during update:")
+            print("Error message:\n", result.stderr)
+    except Exception as e:
+        print(f"An exception occurred: {e}")
+    finally:
+        return dict(updated_files_map)
