@@ -1,3 +1,5 @@
+import time
+
 import svn_manager.svn_manager as SVNManager
 
 project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure\mod_APImplantSimulation'
@@ -60,8 +62,11 @@ def test_check_rv_num():
 
 def test_range_log_dif():
     print()
+    st_t = time.time()
     project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure\mod_APImplantSimulation'
-    start_rv = 7646
-    end_rv = 7656
-    r = SVNManager.get_svn_range_log_dif(path=project_path ,start_revision=start_rv, end_revision=end_rv)
+    start_rv = 7640
+    r = SVNManager.get_svn_range_log_dif(path=project_path, start_revision=start_rv) #, end_revision=end_rv)
     print(r.keys())
+
+    ed_t = time.time()
+    print(ed_t-st_t)

@@ -34,7 +34,7 @@ def get_before_change_rv(path: str, revision: Union[int, str]) -> Optional[Union
             return log.revision
     return None
 
-def get_svn_range_log_dif(path: str, start_revision: Union[int, str], end_revision: Optional[Union[int, str]] = None) -> Dict[str, Tuple[Log, List[FileDiff]]]:
+def get_svn_range_log_dif(path: str, start_revision: Union[int, str], end_revision: Optional[Union[int, str]] = 'HEAD') -> Dict[str, Tuple[Log, List[FileDiff]]]:
     '''
     log -> List[fileDiff]를 구하는 함수로
     전반적인 변화, 건드린 파일을 찾는대 사용
