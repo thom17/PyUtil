@@ -21,7 +21,7 @@ def get_diif_map(path: str, revision) -> Dict[FileDiff, List[Dict[str, Any]]]:
         result[file_diff.filepath] = diff_dict
     return result
 
-def do_update(path: str, revision: Union[int, str] = 'HEAD'):
+def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[str]]:
     return SVNSubprocess.do_update(path, revision)
 
 
@@ -33,6 +33,26 @@ def get_before_change_rv(path: str, revision: Union[int, str]) -> Optional[Union
         if rv_num < revision:
             return log.revision
     return None
+
+def get_svn_range_log_dif(path: str, start_revision: Union[int, str], end_revision: Optional[Union[int, str]] = None) -> Dict[str, Tuple[Log, List[FileDiff]]]:
+    '''
+    log -> List[fileDiff]를 구하는 함수로
+    전반적인 변화, 건드린 파일을 찾는대 사용
+    :param path:
+    :return: [리비전] = (Log, [FileDiff])
+    '''
+    logs_map = {}
+    logs = Log.from_subprocess_by_path_with_range(path, start_revision=start_revision, end_revision=end_revision)
+    file_dif_size = 0
+
+    for idx, log in enumerate(logs):
+        print(f'\r({idx} / {len(logs)}) {log.revision}\t', end="")
+        fileDiffList = svnFactory.make_fileDiff(path, log.revision)
+        logs_map[log.revision] = (log, fileDiffList)
+        file_dif_size += len(fileDiffList)
+    print(f'{len(logs)}) done. {file_dif_size} change file times \t')
+
+    return logs_map
 
 
 def get_svn_logs(path: str) -> Dict[str, Tuple[Log, List[FileDiff]]]:
@@ -59,6 +79,16 @@ def get_svn_logs(path: str) -> Dict[str, Tuple[Log, List[FileDiff]]]:
 
 def get_repo_url(path: str) -> str:
     return SVNSubprocess.get_repo_url(path)
+
+def get_repo_revisions(path: str) -> List[str]:
+    '''
+    Repo(최신)의 경로에 대한 모든 리비전 번호.
+    '''
+
+    path = SVNSubprocess.get_repo_url(path)
+    logs = Log.from_subprocess_by_path(path)
+    return [log.revision for log in logs]
+
 
 
 def get_file_at_revision(file_path: str, revision: int) -> str:

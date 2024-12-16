@@ -29,6 +29,22 @@ def test_do_update():
     print(r)
     print(r)
 
+def test_get_dif_map():
+    print()
+    project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure\mod_APImplantSimulation'
+
+    r = SVNManager.do_update(project_path, 7640)
+
+    cur_rv = SVNManager.get_diif_map(path=project_path, revision=7640)
+    # next_rv = SVNManager.get_diif_map(path=project_path, revision=7641)
+    before_in_rv = SVNManager.get_diif_map(path=project_path, revision=7635)
+    after_in_rv = SVNManager.get_diif_map(path=project_path, revision=7654)
+
+
+
+    print(r)
+    print(r)
+
 
 def test_check_rv_num():
     print()
@@ -40,3 +56,12 @@ def test_check_rv_num():
 
     print(cur_rv)
     print(repo_rv)
+
+
+def test_range_log_dif():
+    print()
+    project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure\mod_APImplantSimulation'
+    start_rv = 7646
+    end_rv = 7656
+    r = SVNManager.get_svn_range_log_dif(path=project_path ,start_revision=start_rv, end_revision=end_rv)
+    print(r.keys())

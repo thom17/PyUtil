@@ -77,8 +77,8 @@ def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[s
 
         # Check the result
         if result.returncode == 0:
-            print("Update successful!")
-            print("Output:\n", result.stdout)
+            # print("Update successful!")
+            # print("Output:\n", result.stdout)
 
             # Parse updated file paths from the output
             for line in result.stdout.splitlines():

@@ -41,7 +41,7 @@ class Log:
     msg: str
 
     @staticmethod
-    def from_subprocess_by_path_with_range(path: str, start_revision: Union[int, str], end_revision: Optional[Union[int, str]] = None) -> List["Log"]:
+    def from_subprocess_by_path_with_range(path: str, start_revision: Union[int, str], end_revision: Optional[Union[int, str]] = 'HEAD') -> List["Log"]:
         '''
         os 측에서 직접 실행하여 로그를 생성.
         :param path: 경로
@@ -50,14 +50,7 @@ class Log:
         '''
         try:
             # 기본 명령어
-            command = ['svn', 'log', path, '--xml']
-
-            # 특정 리비전부터 검색하도록 -r 옵션 추가
-            if end_revision is not None:
-                command.insert(2, f"-r {start_revision}:{end_revision}")  # HEAD까지 검색
-            else:
-                command.insert(2, f"-r {start_revision}:HEAD")  # HEAD까지 검색
-
+            command = ['svn', 'log', '-r', f"{start_revision}:{end_revision}", path, '--xml']
 # 명령 실행
             result = subprocess.run(command, capture_output=True, check=True)
             return Log.from_xml(result.stdout.decode('utf-8'))
