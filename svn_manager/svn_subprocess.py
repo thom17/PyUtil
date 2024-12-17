@@ -83,7 +83,7 @@ def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[s
             # Parse updated file paths from the output
             for line in result.stdout.splitlines():
                 if line.startswith(('A ', 'U ', 'D ', 'R ')):  # Check for SVN status indicators
-                    mod, file_path = line.split()
+                    mod, file_path = line.split(maxsplit=1)
                     updated_files_map[mod].append(file_path) # Extract the file path
 
         else:
