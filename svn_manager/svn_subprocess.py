@@ -67,7 +67,7 @@ def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[s
     """
     # Build the SVN update command
     command = ["svn", "update", "-r", str(revision), path]
-    print("Executing command:", " ".join(command))
+    # print("Executing command:", " ".join(command))
 
     updated_files_map = defaultdict(list)
 
