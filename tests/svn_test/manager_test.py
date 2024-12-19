@@ -34,6 +34,7 @@ def test_do_update():
 def test_get_dif_map():
     print()
     project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure\mod_APImplantSimulation'
+    file_path = project_path + r'\ActuatorPanoFixture.cpp'
 
     r = SVNManager.do_update(project_path, 7640)
 
@@ -42,7 +43,12 @@ def test_get_dif_map():
     before_in_rv = SVNManager.get_diif_map(path=project_path, revision=7635)
     after_in_rv = SVNManager.get_diif_map(path=project_path, revision=7654)
 
+    chs = SVNManager.make_block_changes(file_path, 7640)
 
+    for dif_dict in cur_rv.values():
+        diff = dif_dict['file_diff']
+        bl_changes = SVNManager.make_block_changes(diff)
+        print(bl_changes)
 
     print(r)
     print(r)

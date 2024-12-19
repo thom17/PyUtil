@@ -10,16 +10,50 @@ import svn_manager.svn_subprocess as SVNSubprocess
 from svn_manager.svn_data import Log, FileDiff
 # from svn_data import Log, FileDiff
 
+from functools import singledispatch #오버로딩 처리
+
 def get_diif_map(path: str, revision) -> Dict[FileDiff, List[Dict[str, Any]]]:
     result = {}
     diff_list = svnFactory.make_fileDiff(path, revision)
     for file_diff in diff_list:
         diff_dict = {}
         diff_dict['file_diff'] = file_diff
-        diff_dict['block'] = svnFactory.make_block_changes(file_diff=file_diff)
-        diff_dict['line'] = svnFactory.make_line_changes(file_diff=file_diff)
+        diff_dict['block'] = make_block_changes(file_diff)
+        diff_dict['line'] = make_line_changes(file_diff)
         result[file_diff.filepath] = diff_dict
     return result
+
+FilePath = str
+Revision = Union[str, int]
+@singledispatch
+def make_block_changes(arg: Union[FileDiff, Tuple[FilePath, Revision]]):
+    raise NotImplementedError("Unsupported argument type")
+
+@make_block_changes.register
+def _(file_diff: FileDiff):
+    return svnFactory.make_block_changes(file_diff=file_diff)
+
+@make_block_changes.register
+def _(file_path: FilePath, revision: Revision):
+    diff_list = svnFactory.make_fileDiff(file_path, revision)
+    assert len(diff_list) == 1, f'{file_path}'
+    file_diff = diff_list[0]
+    return make_block_changes(file_diff)
+
+@singledispatch
+def make_line_changes(arg):
+    raise NotImplementedError("Unsupported argument type")
+
+@make_line_changes.register
+def _(file_diff: FileDiff):
+    return svnFactory.make_line_changes(file_diff=file_diff)
+
+@make_line_changes.register
+def _(file_path: str, revision: str):
+    diff_list = svnFactory.make_fileDiff(file_path, revision)
+    assert len(diff_list) == 1, f'{file_path}'
+    file_diff = diff_list[0]
+    return make_line_changes(file_diff)
 
 def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[str]]:
     return SVNSubprocess.do_update(path, revision)
