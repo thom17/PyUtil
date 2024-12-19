@@ -28,7 +28,7 @@ class SvnDiffParseDatas:
         # SVN diff 명령어 실행
         before_rv = int(revision_number) - 1
         command = ["svn", "diff", "-r", f"{before_rv}:{revision_number}", file_path]
-        print(" ".join(command))
+        # print(" ".join(command))
 
         try:
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
