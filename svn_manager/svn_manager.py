@@ -63,7 +63,9 @@ def get_before_change_rv(path: str, revision: Union[int, str]) -> Optional[Union
     path = get_repo_url(path)
     logs = Log.from_subprocess_by_path(path)
     for log in logs: #내림차순으로 정렬되있음
-        rv_num = int(log.revision) #추후에 문제될수 있음. to do : 리비전 비교 처리.
+        # 추후에 문제될수 있음. to do : 리비전 비교 처리.
+        rv_num = int(log.revision)
+        revision = int(revision)
         if rv_num < revision:
             return log.revision
     return None
