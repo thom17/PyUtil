@@ -3,6 +3,8 @@ from dataclasses import asdict, dataclass, is_dataclass
 
 from typing import Dict, List, Optional, Any, Union, Tuple, overload
 
+from collections.abc import Iterable
+
 # from neo4j import GraphDatabase
 '''
 2024-11-18
@@ -188,7 +190,7 @@ class Neo4jHandler:
 
         '''
         result_list: List[Tuple[Any, List[Node]]] = []
-        if isinstance(datas, List):
+        if isinstance(datas, Iterable) and not isinstance(datas, (str, bytes, dict)):
             for data in datas:
                 result_list.append((data, self.__match_nodes(data)))
         else:
