@@ -4,6 +4,45 @@ import chardet                  #for py 11
 
 from typing import Union, TextIO, Optional
 import os
+from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QCheckBox, QPushButton
+import sys
+
+
+def show_checklist_popup(type_map:Dict[str,List[str]]) ->List[str]:
+    """
+    확장명,
+
+    Returns:
+        list: A list of selected types.
+    """
+    app = QApplication.instance() or QApplication(sys.argv)  # Ensure QApplication exists
+    dialog = QDialog()
+    dialog.setWindowTitle("Check List")
+
+    layout = QVBoxLayout()
+    checkboxes = []
+
+    # Create checkboxes for each key in the type_map
+    for key, values in type_map.items():
+        checkbox = QCheckBox(f"{key}: {len(values)}")
+        layout.addWidget(checkbox)
+        checkboxes.append((key, checkbox))
+
+    ok_button = QPushButton("확인")
+    layout.addWidget(ok_button)
+
+    def on_ok():
+        # Store selected types in the dialog
+        dialog.selected_types = [key for key, checkbox in checkboxes if checkbox.isChecked()]
+        dialog.accept()
+
+    ok_button.clicked.connect(on_ok)
+    dialog.setLayout(layout)
+    dialog.exec_()
+
+    # Return the selected types
+    return dialog.selected_types
+
 
 def clean_path(path: str, absolute: bool = True, separator = os.sep) -> str:
     """경로를 깔끔하게 정리하고 구분자를 설정하여 반환합니다.
@@ -88,6 +127,12 @@ class FolderManager:
         # 맵 생성 메서드 호출
         self._create_maps()
 
+    def get_file_list(self) -> List[str]:
+        return self.__file_list
+    
+    def get_dir_list(self) -> List[str]:
+        return self.__dir_list
+    
     def _create_maps(self):
         """폴더 내 파일과 폴더를 추적하여 sub_folder_map과 type_map을 생성하고,
            모든 파일과 폴더를 각각 file_list와 dir_list에 추가하며,
