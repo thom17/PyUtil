@@ -20,7 +20,7 @@ def get_diif_map(path: str, revision) -> Dict[FileDiff, List[Dict[str, Any]]]:
         diff_dict['file_diff'] = file_diff
         diff_dict['block'] = make_block_changes(file_diff)
         diff_dict['line'] = make_line_changes(file_diff)
-        result[file_diff.filepath] = diff_dict
+        result[file_diff.file_path] = diff_dict
     return result
 
 FilePath = str
