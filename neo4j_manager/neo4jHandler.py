@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Any, Union, Tuple, overload
 
 from collections.abc import Iterable
 
-# from neo4j import GraphDatabase
+from neo4j import GraphDatabase
 '''
 2024-11-18
 neomodel vs py2neo
@@ -24,10 +24,33 @@ DataInput = Union[
 
 class Neo4jHandler:
     def __init__(self, uri, user, password, database="neo4j"):
-        # self.driver = driver = GraphDatabase.driver(uri, auth=(user, password))
-        # self.__create_database(database)
+        self.__uri = uri
+        self.__user = user
+        self.__password = password
+        self.__database = database
+
+        self.driver = GraphDatabase.driver(uri, auth=(user, password))
+        if not database in self.show_databases(): #databse 여부 확인
+            self.create_database(database)
+
         self.graph = Graph(uri, auth=(user, password), name=database)
 
+    def show_databases(self) -> List[str]:
+        names = []
+        with self.driver.session(database="system") as session:
+            result = session.run("SHOW DATABASES")
+            for record in result:
+                names.append(record['name'])
+        return names
+
+    def create_database(self, database_name: str):
+        driver = GraphDatabase.driver(self.__uri, auth=(self.__user, self.__password))
+
+        def create_database(tx, database_name):
+            tx.run(f"CREATE DATABASE {database_name}")
+
+        with driver.session(database="system") as session:
+            session.write_transaction(create_database, database_name)
 
     def close(self):
         self.graph = None
