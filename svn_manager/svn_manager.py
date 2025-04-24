@@ -20,7 +20,7 @@ def get_diif_map(path: str, revision) -> Dict[FileDiff, List[Dict[str, Any]]]:
         diff_dict['file_diff'] = file_diff
         diff_dict['block'] = make_block_changes(file_diff)
         diff_dict['line'] = make_line_changes(file_diff)
-        result[file_diff.filepath] = diff_dict
+        result[file_diff.file_path] = diff_dict
     return result
 
 FilePath = str
@@ -112,6 +112,32 @@ def get_svn_logs(path: str) -> Dict[str, Tuple[Log, List[FileDiff]]]:
     return logs_map
     # return logs, fileDiffList
 
+
+def get_recent_logs(path: str, count=50) -> Dict[str, Tuple[Log, List[FileDiff]]]:
+    '''
+    get_svn_logs 에서 검색하는 버전 수를 제한한 것.
+    '''
+    # Get the HEAD revision
+    cur_revision = get_current_revision(path)
+    if cur_revision is None:
+        return {}
+
+    # Get all revisions for the path
+    # all_revisions = get_repo_revisions(path)
+    logs = Log.from_subprocess_by_path_with_range(path=path, start_revision='0', end_revision=cur_revision)
+    all_revisions = [log.revision for log in logs]
+
+    # Take only the most recent 'count' revisions (오름 차순 : 1, 2, 3, ...)
+    recent_revisions = all_revisions[-min(count, len(all_revisions)):]
+
+    if not recent_revisions:
+        return {}
+
+    # Get the oldest revision from our limited set
+    start_revision = recent_revisions[0]
+
+    # Get logs for the specified range
+    return get_svn_range_log_dif(path, start_revision, cur_revision)
 
 def get_repo_url(path: str) -> str:
     return SVNSubprocess.get_repo_url(path)

@@ -107,7 +107,7 @@ class FileDiff:
     '''
     rv_path: str
     revision: str
-    filepath: str
+    file_path: str
     repo_path: str
     action: DiffActionType
 
@@ -120,7 +120,7 @@ class FileDiff:
 @dataclass
 class BlockChanges:
     revision: str
-    filepath: str
+    file_path: str
 
     old_end: str
     old_start: str
@@ -136,7 +136,7 @@ class BlockChanges:
 @dataclass
 class LineChanges:
     revision: str
-    filepath: str
+    file_path: str
 
     line_num: int
     line_str: str

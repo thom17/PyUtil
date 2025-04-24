@@ -47,7 +47,7 @@ def make_fileDiff(path: str, revision: Union[str, int]) -> List[FileDiff]:
 
                 changed_files.append(
                     FileDiff(revision=revision_number, action=action,
-                             filepath=file_path, rv_path=rv_path, repo_path=repo_url))
+                             file_path=file_path, rv_path=rv_path, repo_path=repo_url))
 
         return changed_files
 
@@ -65,13 +65,13 @@ def make_fileDiff(path: str, revision: Union[str, int]) -> List[FileDiff]:
 
 def make_block_changes(file_diff: FileDiff) -> List[BlockChanges]:
     block_change_list = []
-    parse_datas = SvnDiffParseDatas.GetDiff(file_path=file_diff.filepath, revision_number=file_diff.revision)
+    parse_datas = SvnDiffParseDatas.GetDiff(file_path=file_diff.file_path, revision_number=file_diff.revision)
     for file_change in parse_datas.changes:
         for hunk, block_pair in file_change.get_hunks_map().items():
             block_change_list.append(
                 BlockChanges(
                     revision=file_diff.revision,
-                    filepath=file_diff.filepath,
+                    file_path=file_diff.file_path,
                     old_start=hunk.old_start,
                     old_end=hunk.old_line,
                     new_start=hunk.new_start,
@@ -85,20 +85,20 @@ def make_block_changes(file_diff: FileDiff) -> List[BlockChanges]:
 
 def make_line_changes(file_diff: FileDiff) -> List[LineChanges]:
     line_change_list = []
-    parse_datas = SvnDiffParseDatas.GetDiff(file_path=file_diff.filepath, revision_number=file_diff.revision)
+    parse_datas = SvnDiffParseDatas.GetDiff(file_path=file_diff.file_path, revision_number=file_diff.revision)
     for file_change in parse_datas.changes:
         line_change_pair = file_change.get_all_change_pair()
         for change_line in line_change_pair[0]:
             line_change_list.append(
                 LineChanges(
-                    filepath=file_diff.filepath, revision=file_diff.revision,
+                    file_path=file_diff.file_path, revision=file_diff.revision,
                     line_str=change_line.content, line_num=change_line.line_number, action=DiffActionType.Del)
             )
 
         for change_line in line_change_pair[1]:
             line_change_list.append(
                 LineChanges(
-                    filepath=file_diff.filepath, revision=file_diff.revision,
+                    file_path=file_diff.file_path, revision=file_diff.revision,
                     line_str=change_line.content, line_num=change_line.line_number, action=DiffActionType.Add)
             )
 

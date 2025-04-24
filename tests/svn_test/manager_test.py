@@ -13,11 +13,27 @@ def test_get_before_change_rv():
     print("is project pulled ", SVNManager.is_pulled_path(project_path))
     print("is file_path pulled ", SVNManager.is_pulled_path(file_path))
 
+    st = time.time()
     pj_rv = SVNManager.get_before_change_rv(path=project_path, revision=7641)
+    ed = time.time()
+    print(f'pj {(ed-st):.2f}')
+
+    st = time.time()
     fi_rv = SVNManager.get_before_change_rv(path=file_path, revision=7641)
+    ed = time.time()
+
+    print(f'file_path {(ed-st):.2f}')
 
     print(pj_rv)
     print(fi_rv)
+
+def test_none_before_change_rv():
+    print('이전에 변경된 이력이 없는(중간에 추가된) 파일에 대하여 수행')
+    file_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure\mod_APImplantSimulation\DSimpleActuator.cpp'
+    add_file_rv_num = 7581
+
+    result = SVNManager.get_before_change_rv(path=file_path, revision= add_file_rv_num)
+    print(result )
 
 
 def test_do_update():
@@ -76,3 +92,14 @@ def test_range_log_dif():
 
     ed_t = time.time()
     print(ed_t-st_t)
+
+def test_get_recent_logs():
+    print()
+    st_t = time.time()
+    project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure'
+
+    r = SVNManager.get_recent_logs(path=project_path)  # , end_revision=end_rv)
+    print(r.keys())
+
+    ed_t = time.time()
+    print(ed_t - st_t)

@@ -58,8 +58,13 @@ class Neo4jHandler:
     data: Union[dataclass, List[dataclass], Tuple[dataclass, str], List[Tuple[dataclass, str]]]
 
     #to do : 여기서 좀 이쁘게 다듬자
-
     def save_data(self, data: DataInput, pid_key: Optional[str] = None):
+        '''
+        add or update 
+        Args:
+            data: 추가할 데이터, 복수라면 리스트
+            pid_key: 식별 키 가 없을 경우 모든 데이터가 중복이 아니라면 추가 
+        '''
         if isinstance(data, List):
             return self.__save_data_batch(data_list=data, pid_key=pid_key)
         else:
@@ -136,6 +141,12 @@ class Neo4jHandler:
         return data_node
 
     def __save_data_batch(self, data_list: List[Union[dataclass, Tuple[dataclass, str]]], pid_key: Optional[str]):
+          '''
+          add or update 
+            Args:
+                data_list: 추가할 데이터 
+                pid_key: 식별 키 가 없을 경우 모든 데이터가 중복이 아니라면 추가 
+          '''
           # 데이터 타입 이름 추출
           # 트랜잭션 명시적으로 관리
           tx = self.graph.begin()  # Transaction 시작
@@ -150,11 +161,13 @@ class Neo4jHandler:
 
                   data_dict = self.__data2dict(data)
                   data_node = Node(type_name, **data_dict)
-                  if pid_key:
+
+                  #특정 키만 같다면 업데이트
+                  if pid_key: 
                       data_node.__primarykey__ = pid_key
                       tx.merge(data_node, type_name, pid_key)
-                  else:
-                      tx.create(data_node)
+                  else: #모든 속성 중 하나라도 다르면 추가
+                      tx.merge(data_node, type_name, tuple(data_dict.keys())) 
               tx.commit()  # 트랜잭션 커밋
           except Exception as e:
               tx.rollback()  # 예외 발생 시 롤백
@@ -203,7 +216,7 @@ class Neo4jHandler:
         # type_name = str(type(data).__name__)
 
 
-    def search_node_map(self, datas: DataInput) -> Tuple[Any, List[Node]]:
+    def search_node_map(self, datas: DataInput) -> List[Tuple[Any, List[Node]]]:
         '''
         원래는 map(dict)이어야 하지만 data들이 hash 되지 않을 수 있음
         Args:
