@@ -43,6 +43,9 @@ class Neo4jHandler:
                 names.append(record['name'])
         return names
 
+    def change_database(self, database_name: str):
+        self.graph = Graph(self.__uri, auth=(self.__user, self.__password), name=database_name)
+
     def create_database(self, database_name: str):
         driver = GraphDatabase.driver(self.__uri, auth=(self.__user, self.__password))
 
