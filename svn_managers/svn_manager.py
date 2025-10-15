@@ -1,4 +1,4 @@
-import svn_manager.svn_data_factory as svnFactory
+import svn_managers.svn_data_factory as svnFactory
 from typing import Dict, Tuple, List, Union
 import subprocess
 import xml.etree.ElementTree as ET
@@ -6,8 +6,8 @@ from typing import Optional, Any
 from datetime import datetime
 
 import re
-import svn_manager.svn_subprocess as SVNSubprocess
-from svn_manager.svn_data import Log, FileDiff
+import svn_managers.svn_subprocess as SVNSubprocess
+from svn_managers.svn_data import Log, FileDiff
 # from svn_data import Log, FileDiff
 
 from functools import singledispatch #오버로딩 처리
@@ -238,6 +238,21 @@ def get_current_revision(path: str):
     except subprocess.CalledProcessError as e:
         print(f"Error retrieving current revision: {e.stderr}")
         return None
+def get_head_revision_map(path: str) -> Dict[Revision, list[FilePath]]:
+    '''
+    경로 내의 모든 파일에 대하여 각각의 최신 리비전으로 mapping된 딕셔너리 반환.
+    '''
+
+    head_revision = get_head_revision(path)
+    logs = Log.from_subprocess_by_path(path)
+    revision_map: Dict[Revision, list[FilePath]] = {}
+
+    for log in logs:
+        for file_diff in svnFactory.make_fileDiff(path, log.revision):
+            if log.revision == head_revision:
+                revision_map.setdefault(log.revision, []).append(file_diff.file_path)
+    return revision_map
+
 
 
 def get_head_revision(repo_url: str):
@@ -259,18 +274,23 @@ def get_head_revision(repo_url: str):
 
 
 if __name__ == "__main__":
-    # path = r'D:\dev\AutoPlanning\Pano\pano-task\mod_APImplantSimulation'
-    path = r'D:\dev\AutoPlanning\Pano\pano-task\mod_APImplantSimulation\UIDlgImplantLib.cpp'
+    path = r'D:\dev\AutoPlanning\Pano\pano-task\mod_APImplantSimulation'
+    # path = r'D:\dev\AutoPlanning\Pano\pano-task\mod_APImplantSimulation\UIDlgImplantLib.cpp'
 
-    result = __get_svn_log_xml(path)
-    print(type(result))
-    # print(result)
+    head_map = get_head_revision_map(path)
+    print(f'head map size : {len(head_map)}')
+    for revision, file_paths in head_map.items():
+        print(f'Revision: {revision}, Files: {len(file_paths)}')
 
-    data = __xml_parse_svn_log(result)
-
-
-    with open('pano-task-modeIp-log.xml', "w", encoding="utf-8") as f:
-        f.write(result)
+    # result = __get_svn_log_xml(path)
+    # print(type(result))
+    # # print(result)
+    #
+    # data = __xml_parse_svn_log(result)
+    #
+    #
+    # with open('pano-task-modeIp-log.xml', "w", encoding="utf-8") as f:
+    #     f.write(result)
 
 
     # result = get_svn_logs(path)

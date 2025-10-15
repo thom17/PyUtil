@@ -1,4 +1,4 @@
-from svn_manager.svn_diff_data import FileChange, Hunk, Change
+from svn_managers.svn_diff_data import FileChange, Hunk, Change
 
 import subprocess
 import re

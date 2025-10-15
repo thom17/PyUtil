@@ -1,11 +1,11 @@
 import pytest
 from dataclasses import asdict
 
-from svn_manager.svn_manager import get_line_changes_log_map
+from svn_managers.svn_manager import get_line_changes_log_map
 
-import svn_manager.svn_data_factory as svnFactory
+import svn_managers.svn_data_factory as svnFactory
 
-import svn_manager.svn_manager as SVN
+import svn_managers.svn_manager as SVN
 
 def test_t1():
     project_path = r'D:\dev\AutoPlanning\Pano\pano-task\mod_APImplantSimulation'

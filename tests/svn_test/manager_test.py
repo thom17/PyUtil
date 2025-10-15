@@ -1,6 +1,6 @@
 import time
 
-import svn_manager.svn_manager as SVNManager
+import svn_managers.svn_manager as SVNManager
 
 project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure\mod_APImplantSimulation'
 file_path = project_path + r'\UIDlgImplantLib.cpp'

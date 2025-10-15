@@ -1,6 +1,6 @@
-from svn_manager.svn_data import Log, FileDiff, BlockChanges, LineChanges, DiffActionType
-from svn_manager.svn_dif_Parser import SvnDiffParseDatas
-from svn_manager.svn_subprocess import get_repo_url
+from svn_managers.svn_data import Log, FileDiff, BlockChanges, LineChanges, DiffActionType
+from svn_managers.svn_dif_Parser import SvnDiffParseDatas
+from svn_managers.svn_subprocess import get_repo_url
 
 from typing import List, Union, Dict
 import subprocess

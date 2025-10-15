@@ -1,4 +1,4 @@
-import svn_manager.svn_subprocess as SVNSubprocess
+import svn_managers.svn_subprocess as SVNSubprocess
 
 def test_do_update():
     print()
