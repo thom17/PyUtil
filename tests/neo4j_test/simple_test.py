@@ -200,7 +200,7 @@ def test_all():
     result2 = handler.do_query("MATCH (n) RETURN count(n) AS total_nodes")
     result2_2 = handler.do_query("MATCH (n) RETURN count(n) as size")
 
-    result3 = handler.get_all_node_size()
+    result3 = handler.get_node_count()
     print('size ', result3)
     print(result1)
     print(result2)
