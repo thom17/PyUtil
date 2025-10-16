@@ -30,17 +30,30 @@ class Neo4jHandler:
         self.__database = database
 
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
-        if not database in self.show_databases(): #databse 여부 확인
+        if not database in self.get_db_names(): #databse 여부 확인
             self.create_database(database)
 
         self.graph = Graph(uri, auth=(user, password), name=database)
 
-    def show_databases(self) -> List[str]:
+    def show_databases(self):
+        for name in self.get_db_names():
+            temp_handler = Neo4jHandler(self.__uri, self.__user, self.__password, database=name)
+            if name == self.__database:
+                print(f'Database: {name} (Current)')
+            else:
+                print(f'Database: {name}')
+            temp_handler.print_info()
+            print('-----------------------------------')
+
+    def get_db_names(self) -> List[str]:
         names = []
         with self.driver.session(database="system") as session:
             result = session.run("SHOW DATABASES")
             for record in result:
-                names.append(record['name'])
+                if record['name'] == 'system':  # 시스템 DB는 제외
+                    continue
+                else:
+                    names.append(record['name'])
         return names
 
     def change_database(self, database_name: str):
@@ -52,8 +65,14 @@ class Neo4jHandler:
         def create_database(tx, database_name):
             tx.run(f"CREATE DATABASE {database_name}")
 
-        with driver.session(database="system") as session:
-            session.write_transaction(create_database, database_name)
+        with (driver.session(database="system") as session):
+            #Py 및 Neo4j 드라이버 버전 차이로 인한 예외 처리
+            try:
+                session.execute_write(create_database, database_name)
+            except:
+                session.write_transaction(create_database, database_name)
+            finally:
+                pass
 
     def close(self):
         self.graph = None
