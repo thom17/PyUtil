@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Any, Union, Tuple, overload
 from collections.abc import Iterable
 
 from neo4j import GraphDatabase
+import re  # 추가: 타임스탬프 트리밍에 사용
 '''
 2024-11-18
 neomodel vs py2neo
@@ -274,8 +275,58 @@ class Neo4jHandler:
     def do_query(self, query: str)-> List[Dict[str, Any]]:
         return self.graph.run(query).data()
 
-    def get_all_node_size(self):
-        return self.do_query("MATCH (n) RETURN count(n) as size")[0]['size']
+    # 추가: 최근 수정일 조회(기존 connector.get_last_modified 이동)
+    def get_last_modified(self) -> str:
+        # 내부 포맷터: 'YYYY-MM-DDTHH:MM:SS(.fraction ...)?' -> 'YYYY-MM-DDTHH:MM:SS'
+        def _normalize_ts(val: Any) -> str:
+            if val is None:
+                return ""
+            ts = val.isoformat() if hasattr(val, "isoformat") else str(val)
+            m = re.match(r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})", ts)
+            return m.group(1) if m else ts
+
+        # 노드 속성에서 최대 타임스탬프 추출
+        res = self.do_query("""
+            MATCH (n)
+            WITH [n.updatedAt, n.modifiedAt, n.timestamp, n.createdAt, n.date, n.datetime] AS ts
+            UNWIND ts AS t
+            WITH t WHERE t IS NOT NULL
+            RETURN max(t) AS last
+        """)
+        try:
+            if res and len(res) > 0 and res[0].get("last"):
+                return _normalize_ts(res[0]["last"])
+        except Exception:
+            pass
+
+        # 관계 속성에서 최대 타임스탬프 추출
+        res2 = self.do_query("""
+            MATCH ()-[r]-()
+            WITH [r.updatedAt, r.modifiedAt, r.timestamp, r.createdAt, r.date, r.datetime] AS ts
+            UNWIND ts AS t
+            WITH t WHERE t IS NOT NULL
+            RETURN max(t) AS last
+        """)
+        try:
+            if res2 and len(res2) > 0 and res2[0].get("last"):
+                return _normalize_ts(res2[0]["last"])
+        except Exception:
+            pass
+
+        return ""
+
+    def get_node_count(self) ->int:
+        res = self.do_query("MATCH (n) RETURN count(n) AS cnt")
+        try:
+            if res and len(res) > 0:
+                row = res[0]
+                # 다양한 키 호환
+                for key in ("cnt", "COUNT(n)", "count(n)", "size"):
+                    if key in row and row[key] is not None:
+                        return int(row[key])
+        except Exception:
+            pass
+        return 0
 
     def print_info(self):
 
@@ -333,5 +384,3 @@ if __name__ == "__main__":
 
     # all_info_objects = neo4j_handler.read_all_nodes()
     # src_map = all_info_objects.get_src_map()
-
-
