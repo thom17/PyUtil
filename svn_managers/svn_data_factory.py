@@ -1,3 +1,5 @@
+import os.path
+
 from svn_managers.svn_data import Log, FileDiff, BlockChanges, LineChanges, DiffActionType
 from svn_managers.svn_dif_Parser import SvnDiffParseDatas
 from svn_managers.svn_subprocess import get_repo_url
@@ -39,6 +41,7 @@ def make_fileDiff(path: str, revision: Union[str, int]) -> List[FileDiff]:
                 action = line[0]
                 action = DiffActionType.map_code_to_action(action=action)
                 file_path = match.group(1)
+                name = os.path.basename(file_path)
 
                 repo_url = __convert_url_path(file_path=file_path)
 
@@ -47,7 +50,7 @@ def make_fileDiff(path: str, revision: Union[str, int]) -> List[FileDiff]:
 
                 changed_files.append(
                     FileDiff(revision=revision_number, action=action,
-                             file_path=file_path, rv_path=rv_path, repo_path=repo_url))
+                             file_path=file_path, rv_path=rv_path, repo_path=repo_url, name = name))
 
         return changed_files
 

@@ -109,6 +109,7 @@ class FileDiff:
     revision: str
     file_path: str
     repo_path: str
+    name: str
     action: DiffActionType
 
     def to_dict(self) -> Dict:
