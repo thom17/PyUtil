@@ -53,6 +53,30 @@ def get_file_at_revision(file_path: str, revision: int) -> str:
     except Exception as e:
         print("An error occurred:", e)
 
+def get_modified_files(path: str, status_filters : List[str] = ["M"]) -> List[str]:
+    '''
+    수정된 파일 목록을 반환한다.
+    '''
+
+    command = ["svn", "status", path]
+    modified_files = []
+
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                status = line[0]
+                if status in status_filters:
+                    _, file_path = line.split(maxsplit=1)
+                    modified_files.append(file_path)
+        else:
+            print("Error:\n", result.stderr)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    return modified_files
+
+
 
 def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[str]]:
     """

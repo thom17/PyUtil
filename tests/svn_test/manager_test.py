@@ -1,9 +1,48 @@
 import time
 
 import svn_managers.svn_manager as SVNManager
+import svn_managers.svn_subprocess as SVNSubprocess
 
 project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure\mod_APImplantSimulation'
 file_path = project_path + r'\UIDlgImplantLib.cpp'
+
+def test_get_modified_files():
+    project_path = r'D:\dev\AutoPlanning\trunk\Ap-Trunk-Auto-Task'
+    r = SVNSubprocess.get_modified_files(project_path)
+    print(project_path)
+    print(r)
+
+def test_range_log():
+    project_path = r'D:\dev\AutoPlanning\trunk\Ap-Trunk-Auto-Task'
+    start = 8041
+    end = '8045'
+    r= SVNManager.get_svn_range_log_dif(path=project_path ,start_revision=start, end_revision=end)
+    print(r)
+
+
+def test_count_commit():
+    project_path = r'D:\dev\AutoPlanning\trunk\AP_trunk_pure'
+    # project_path = r'D:\dev\EcoCad\SimpleCAD'
+    author_map = SVNManager.get_author_logs(project_path)
+    for author, logs in author_map.items():
+        datas = []
+        tasks_num = 0
+        bug_nums = 0
+        for log in logs:
+            if log.date.year == 2024:
+                datas.append(log)
+                if 'bug' in log.msg.lower():
+                    bug_nums += 1
+                if 'task' in log.msg.lower():
+                    tasks_num += 1
+        if datas:
+
+            earliest = min(datas, key=lambda x: x.date)
+            latest = max(datas, key=lambda x: x.date)
+            # print(f"Earliest: {earliest.date}, Latest: {latest.date}")
+
+        print(author, " : ", len(datas), 'bug ', bug_nums, ' task ',tasks_num)
+
 
 def test_get_before_change_rv():
     print()
