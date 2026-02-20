@@ -70,6 +70,9 @@ def get_before_change_rv(path: str, revision: Union[int, str]) -> Optional[Union
             return log.revision
     return None
 
+def do_revert(path: str) ->List[str]:
+    return SVNSubprocess.do_revert(path)
+
 def get_svn_range_log_dif(path: str, start_revision: Union[int, str], end_revision: Optional[Union[int, str]] = 'HEAD') -> Dict[str, Tuple[Log, List[FileDiff]]]:
     '''
     log -> List[fileDiff]를 구하는 함수로

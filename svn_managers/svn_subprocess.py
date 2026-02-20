@@ -76,7 +76,38 @@ def get_modified_files(path: str, status_filters : List[str] = ["M"]) -> List[st
 
     return modified_files
 
+def do_revert(path: str) -> List[str]:
+    """
+    Revert the given path and return the list of reverted files.
 
+    Args:
+        path (str): The file or directory path to revert.
+
+    Returns:
+        List[str]: A list of paths that were reverted.
+    """
+    command = ["svn", "revert", "-R", path]
+    reverted_files = []
+
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            # print("Revert successful!")
+            # print("Output:\n", result.stdout)
+
+            # Parse reverted file paths from the output
+            for line in result.stdout.splitlines():
+                if line.startswith('Reverted '):
+                    _, file_path = line.split(maxsplit=1)
+                    reverted_files.append(file_path)  # Extract the file path
+
+        else:
+            print("Error during revert:")
+            print("Error message:\n", result.stderr)
+    except Exception as e:
+        print(f"An exception occurred: {e}")
+    finally:
+        return reverted_files
 
 def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[str]]:
     """
@@ -117,3 +148,7 @@ def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[s
         print(f"An exception occurred: {e}")
     finally:
         return dict(updated_files_map)
+
+if __name__ == "__main__":
+    p = r'D:\dev\AutoPlanning\trunk\AP-UI-Task\AppCommon_AP\stdafx.cpp'
+    do_revert(p)
