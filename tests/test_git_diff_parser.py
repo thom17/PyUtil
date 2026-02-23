@@ -76,13 +76,13 @@ class TestGitDiffData(unittest.TestCase):
         hunk.print_info()
 
     def test_git_file_change_add_hunk(self):
-        fc = GitFileChange("src/test.py", "abc123")
+        fc = GitFileChange('/repo', "src/test.py", "abc123")
         hunk = Hunk(1, 1)
         fc.add_hunk(hunk)
         self.assertEqual(len(fc.hunks), 1)
 
     def test_get_all_change_pair(self):
-        fc = GitFileChange("src/test.py", "abc123")
+        fc = GitFileChange('/repo', "src/test.py", "abc123")
         hunk = Hunk(1, 1)
         hunk.added.append(Change(2, "new line"))
         hunk.removed.append(Change(1, "old line"))
@@ -97,11 +97,12 @@ class TestGitDiffData(unittest.TestCase):
 
 class TestGitDiffParser(unittest.TestCase):
     def test_parse_sample_diff(self):
-        parser = GitDiffParser(SAMPLE_DIFF, "abc123")
+        parser = GitDiffParser(SAMPLE_DIFF, "abc123", '/my/repo')
         self.assertEqual(len(parser.changes), 1)
 
         fc = parser.changes[0]
         self.assertEqual(fc.file_path, "src/main.py")
+        self.assertEqual(fc.repo_path, '/my/repo')
         self.assertEqual(len(fc.hunks), 1)
 
     def test_parse_hunk_lines(self):
@@ -146,6 +147,8 @@ class TestGitDiffParser(unittest.TestCase):
 
         parser = GitDiffParser.GetDiff('/repo', 'abc123')
         self.assertEqual(len(parser.changes), 1)
+        self.assertEqual(parser.repo_path, '/repo')
+        self.assertEqual(parser.changes[0].repo_path, '/repo')
         mock_run.assert_called_once()
 
     @patch('subprocess.run')

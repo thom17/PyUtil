@@ -61,9 +61,9 @@ class GitFileChange:
         else:
             before_ref = f"{commit_hash}~1:{self.file_path}"
             after_ref = f"{commit_hash}:{self.file_path}"
-            command_after = ["git", "show", after_ref]
+            command_after = ["git", "-C", self.repo_path, "show", after_ref]
 
-        command_before = ["git", "show", before_ref]
+        command_before = ["git", "-C", self.repo_path, "show", before_ref]
         print('Running command:', ' '.join(command_before))
         print('Running command:', ' '.join(command_after))
         try:

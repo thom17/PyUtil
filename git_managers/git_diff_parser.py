@@ -7,15 +7,17 @@ from typing import List, Optional
 
 
 class GitDiffParser:
-    def __init__(self, diff_output: str, commit_hash: str):
+    def __init__(self, diff_output: str, commit_hash: str, repo_path: str = ''):
         """
         diff 출력을 파싱하여 changes 생성.
 
         Args:
             diff_output (str): git diff 명령 출력 문자열
             commit_hash (str): 대상 커밋 해시
+            repo_path (str): 저장소 경로 (git 명령 실행 시 필요)
         """
         self.commit_hash = commit_hash
+        self.repo_path = repo_path
         self.diff_output = diff_output
         self.changes: List[GitFileChange] = []
         self.__parse()
@@ -44,13 +46,13 @@ class GitDiffParser:
                 encoding='utf-8', errors='replace'
             )
             if result.returncode == 0:
-                return GitDiffParser(result.stdout, commit_hash)
+                return GitDiffParser(result.stdout, commit_hash, repo_path)
             else:
                 print(f"git diff error: {result.stderr}")
-                return GitDiffParser('', commit_hash)
+                return GitDiffParser('', commit_hash, repo_path)
         except Exception as e:
             print(f"Exception running git diff: {e}")
-            return GitDiffParser('', commit_hash)
+            return GitDiffParser('', commit_hash, repo_path)
 
     @staticmethod
     def GetDiffLocal(repo_path: str, is_print: bool = False) -> 'GitDiffParser':
@@ -75,13 +77,13 @@ class GitDiffParser:
                 encoding='utf-8', errors='replace'
             )
             if result.returncode == 0:
-                return GitDiffParser(result.stdout, commit_hash)
+                return GitDiffParser(result.stdout, commit_hash, repo_path)
             else:
                 print(f"git diff error: {result.stderr}")
-                return GitDiffParser('', commit_hash)
+                return GitDiffParser('', commit_hash, repo_path)
         except Exception as e:
             print(f"Exception running git diff: {e}")
-            return GitDiffParser('', commit_hash)
+            return GitDiffParser('', commit_hash, repo_path)
 
     @staticmethod
     def GetDiffRange(repo_path: str, from_hash: str, to_hash: str) -> 'GitDiffParser':
@@ -104,13 +106,13 @@ class GitDiffParser:
                 encoding='utf-8', errors='replace'
             )
             if result.returncode == 0:
-                return GitDiffParser(result.stdout, to_hash)
+                return GitDiffParser(result.stdout, to_hash, repo_path)
             else:
                 print(f"git diff error: {result.stderr}")
-                return GitDiffParser('', to_hash)
+                return GitDiffParser('', to_hash, repo_path)
         except Exception as e:
             print(f"Exception running git diff: {e}")
-            return GitDiffParser('', to_hash)
+            return GitDiffParser('', to_hash, repo_path)
 
     def __parse(self):
         """
