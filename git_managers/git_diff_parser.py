@@ -21,7 +21,7 @@ class GitDiffParser:
         self.__parse()
 
     @staticmethod
-    def GetDiff(repo_path: str, commit_hash: str) -> 'GitDiffParser':
+    def GetDiff(repo_path: str, commit_hash: str, is_print: bool = False) -> 'GitDiffParser':
         """
         특정 커밋의 diff를 가져와서 GitDiffParser 인스턴스 생성.
         git diff <commit>~1 <commit> 명령 사용.
@@ -34,6 +34,40 @@ class GitDiffParser:
             GitDiffParser: 파싱된 diff 인스턴스
         """
         command = ["git", "-C", repo_path, "diff", f"{commit_hash}~1", commit_hash]
+        if is_print:
+            print(' '.join(command))
+
+        try:
+            result = subprocess.run(
+                command,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                encoding='utf-8', errors='replace'
+            )
+            if result.returncode == 0:
+                return GitDiffParser(result.stdout, commit_hash)
+            else:
+                print(f"git diff error: {result.stderr}")
+                return GitDiffParser('', commit_hash)
+        except Exception as e:
+            print(f"Exception running git diff: {e}")
+            return GitDiffParser('', commit_hash)
+
+    @staticmethod
+    def GetDiffLocal(repo_path: str, is_print: bool = False) -> 'GitDiffParser':
+        """
+        특정 커밋의 diff를 가져와서 GitDiffParser 인스턴스 생성.
+        git diff <commit>~1 <commit> 명령 사용.
+
+        Args:
+            repo_path (str): 저장소 경로
+        Returns:
+            GitDiffParser: 파싱된 diff 인스턴스
+        """
+        commit_hash = "LOCAL"
+        command = ["git", "-C", repo_path, "diff", commit_hash]
+        if is_print:
+            print(' '.join(command))
+
         try:
             result = subprocess.run(
                 command,
@@ -95,14 +129,14 @@ class GitDiffParser:
             # 파일 경로 추출: --- a/path (이전 파일)
             elif line.startswith("--- a/"):
                 file_path = line[6:]
-                current_file = GitFileChange(file_path, self.commit_hash)
+                current_file = GitFileChange(self.repo_path, file_path, self.commit_hash)
                 self.changes.append(current_file)
                 current_hunk = None
 
             # 새 파일 생성의 경우 +++ b/path (이전 없음)
             elif line.startswith("+++ b/") and current_file is None:
                 file_path = line[6:]
-                current_file = GitFileChange(file_path, self.commit_hash)
+                current_file = GitFileChange(self.repo_path, file_path, self.commit_hash)
                 self.changes.append(current_file)
                 current_hunk = None
 
@@ -131,3 +165,14 @@ class GitDiffParser:
             elif line.startswith(" ") and current_hunk:
                 current_hunk.old_line += 1
                 current_hunk.new_line += 1
+
+if __name__ == "__main__":
+    from filemanager.window_file_open import get_folder_path
+    file_path = get_folder_path(title= 'git 저장소 선택')
+    r1 =  GitDiffParser.GetDiff(file_path, 'HEAD', is_print=True)
+
+    print(len(r1.changes))
+    r2 = GitDiffParser.GetDiffLocal(file_path)
+    print(len(r2.changes))
+    print()
+

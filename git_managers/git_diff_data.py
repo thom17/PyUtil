@@ -36,10 +36,11 @@ class Hunk:
 
 
 class GitFileChange:
-    def __init__(self, file_path: str, commit_hash: str = ''):
+    def __init__(self, repo_path: str, file_path: str, commit_hash: str = ''):
         self.file_path = file_path
         self.commit_hash = commit_hash
         self.hunks: List[Hunk] = []
+        self.repo_path = repo_path
 
     def read_pair(self, commit_hash: str = '') -> Tuple[str, str]:
         """
@@ -51,10 +52,21 @@ class GitFileChange:
         Returns:
             Tuple[str, str]: (이전 파일 내용, 이후 파일 내용)
         """
-        target_hash = commit_hash if commit_hash else self.commit_hash
+        #Local 변경인 경우 HEAD와 현제 파일을 비교
+        if commit_hash == '' and self.commit_hash == 'LOCAL':
+            commit_hash = 'HEAD'
+            before_ref = f"{self.commit_hash}:{self.file_path}"
+            command_after = ["cat", self.file_path]
+        #그 외는 이전 버전과 비교
+        else:
+            before_ref = f"{commit_hash}~1:{self.file_path}"
+            after_ref = f"{commit_hash}:{self.file_path}"
+            command_after = ["git", "show", after_ref]
+
+        command_before = ["git", "show", before_ref]
+        print('Running command:', ' '.join(command_before))
+        print('Running command:', ' '.join(command_after))
         try:
-            before_ref = f"{target_hash}~1:{self.file_path}"
-            command_before = ["git", "show", before_ref]
             result_before = subprocess.run(
                 command_before,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -62,8 +74,6 @@ class GitFileChange:
             )
             before_code = result_before.stdout
 
-            after_ref = f"{target_hash}:{self.file_path}"
-            command_after = ["git", "show", after_ref]
             result_after = subprocess.run(
                 command_after,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -74,7 +84,7 @@ class GitFileChange:
             return (before_code, after_code)
 
         except Exception as e:
-            print(f"Error fetching file content for commit {target_hash}: {e}")
+            print(f"Error fetching file content for commit {commit_hash}: {e}")
             return ('', '')
 
     def get_hunks_map(self) -> Dict[Hunk, Tuple[str, str]]:
