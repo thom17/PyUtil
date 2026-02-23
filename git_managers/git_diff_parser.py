@@ -66,7 +66,7 @@ class GitDiffParser:
             GitDiffParser: 파싱된 diff 인스턴스
         """
         commit_hash = "LOCAL"
-        command = ["git", "-C", repo_path, "diff", commit_hash]
+        command = ["git", "-C", repo_path, "diff", "HEAD"]
         if is_print:
             print(' '.join(command))
 

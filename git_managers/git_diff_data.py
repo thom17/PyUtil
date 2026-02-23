@@ -1,6 +1,7 @@
 from typing import List, Dict, Tuple
 import subprocess
-
+from filemanager.fileReader import read_file
+import os
 
 class Change:
     def __init__(self, line_number: int, content: str):
@@ -55,17 +56,17 @@ class GitFileChange:
         #Local 변경인 경우 HEAD와 현제 파일을 비교
         if commit_hash == '' and self.commit_hash == 'LOCAL':
             commit_hash = 'HEAD'
-            before_ref = f"{self.commit_hash}:{self.file_path}"
-            command_after = ["cat", self.file_path]
+            before_ref = f"{commit_hash}:{self.file_path}"
+            full_path = os.path.join(self.repo_path, self.file_path)
+            after_code = read_file(full_path)
         #그 외는 이전 버전과 비교
         else:
             before_ref = f"{commit_hash}~1:{self.file_path}"
             after_ref = f"{commit_hash}:{self.file_path}"
             command_after = ["git", "-C", self.repo_path, "show", after_ref]
+            after_code = ''
 
         command_before = ["git", "-C", self.repo_path, "show", before_ref]
-        print('Running command:', ' '.join(command_before))
-        print('Running command:', ' '.join(command_after))
         try:
             result_before = subprocess.run(
                 command_before,
@@ -74,12 +75,13 @@ class GitFileChange:
             )
             before_code = result_before.stdout
 
-            result_after = subprocess.run(
-                command_after,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                encoding='utf-8', errors='replace'
-            )
-            after_code = result_after.stdout
+            if not after_code:
+                result_after = subprocess.run(
+                    command_after,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    encoding='utf-8', errors='replace'
+                )
+                after_code = result_after.stdout
 
             return (before_code, after_code)
 
