@@ -43,7 +43,7 @@ class GitFileChange:
         self.hunks: List[Hunk] = []
         self.repo_path = repo_path
 
-    def read_pair(self, commit_hash: str = '') -> Tuple[str, str]:
+    def read_pair(self) -> Tuple[str, str]:
         """
         git show 명령으로 특정 커밋 전후의 파일 내용을 가져온다.
 
@@ -54,15 +54,14 @@ class GitFileChange:
             Tuple[str, str]: (이전 파일 내용, 이후 파일 내용)
         """
         #Local 변경인 경우 HEAD와 현제 파일을 비교
-        if commit_hash == '' and self.commit_hash == 'LOCAL':
-            commit_hash = 'HEAD'
-            before_ref = f"{commit_hash}:{self.file_path}"
+        if self.commit_hash == 'LOCAL':
+            before_ref = f"{self.commit_hash}:{self.file_path}"
             full_path = os.path.join(self.repo_path, self.file_path)
             after_code = read_file(full_path)
         #그 외는 이전 버전과 비교
         else:
-            before_ref = f"{commit_hash}~1:{self.file_path}"
-            after_ref = f"{commit_hash}:{self.file_path}"
+            before_ref = f"{self.commit_hash}~1:{self.file_path}"
+            after_ref = f"{self.commit_hash}:{self.file_path}"
             command_after = ["git", "-C", self.repo_path, "show", after_ref]
             after_code = ''
 
@@ -86,7 +85,7 @@ class GitFileChange:
             return (before_code, after_code)
 
         except Exception as e:
-            print(f"Error fetching file content for commit {commit_hash}: {e}")
+            print(f"Error fetching file content for commit {self.commit_hash}: {e}")
             return ('', '')
 
     def get_hunks_map(self) -> Dict[Hunk, Tuple[str, str]]:
