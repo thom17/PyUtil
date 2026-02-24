@@ -55,7 +55,7 @@ class GitFileChange:
         """
         #Local 변경인 경우 HEAD와 현제 파일을 비교
         if self.commit_hash == 'LOCAL':
-            before_ref = f"{self.commit_hash}:{self.file_path}"
+            before_ref = f"HEAD:{self.file_path}"
             full_path = os.path.join(self.repo_path, self.file_path)
             after_code = read_file(full_path)
         #그 외는 이전 버전과 비교
