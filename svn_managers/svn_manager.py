@@ -1,3 +1,5 @@
+import os.path
+
 import svn_managers.svn_data_factory as svnFactory
 from typing import Dict, Tuple, List, Union
 import subprocess
@@ -57,6 +59,25 @@ def _(file_path: str, revision: str):
 
 def do_update(path: str, revision: Union[int, str] = 'HEAD') -> Dict[str, List[str]]:
     return SVNSubprocess.do_update(path, revision)
+
+def get_modified_files(path: str, status_filters : List[str] = ["M"]) -> List[str]:
+    '''
+    수정된 파일 목록을 반환한다.
+    '''
+    return SVNSubprocess.get_modified_files(path, status_filters)
+
+def get_list(dir_path: str, visit_dir = True) -> List[str]:
+    '''
+    디렉토리 내의 모든 파일 목록을 반환한다. (폴더 내부 기본적으로 포함)
+    '''
+    assert os.path.isdir(dir_path), f'{dir_path} is not a directory'
+
+    files =[dir_path + os.sep + path for path in SVNSubprocess.get_list(dir_path)]
+    if not visit_dir:
+        files = [f for f in files if not os.path.isdir(f)]
+
+    return files
+
 
 
 def get_before_change_rv(path: str, revision: Union[int, str]) -> Optional[Union[int, str]]:

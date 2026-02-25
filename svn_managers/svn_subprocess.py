@@ -1,13 +1,30 @@
 '''
 공통적으로 또는 메서드 하나 수준으로 사용할만한 유틸 모듈
 '''
-
+import os
 import subprocess
 import xml.etree.ElementTree as ET
 from typing import Optional, Union, List, Dict
 from datetime import datetime
 from collections import defaultdict
 
+
+def get_list(dir_path: str) -> List[str]:
+    """
+    SVN list 명령어를 사용하여 디렉토리의 파일 목록을 가져온다.
+    """
+    command = ["svn", "list", dir_path]
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            file_list = result.stdout.splitlines()
+            return file_list
+        else:
+            print("Error:\n", result.stderr)
+            raise RuntimeError(f"Failed to list SVN directory {dir_path}")
+    except Exception as e:
+        print("An error occurred:", e)
+        raise
 
 def get_repo_url(file_path: str) -> str:
     """
