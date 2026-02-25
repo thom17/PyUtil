@@ -1,6 +1,6 @@
 import subprocess
 import os
-def add_by_path_list(path: str, file_path_lists: [str]):
+def add_by_path_list(path: str, file_path_lists: list[str]):
     '''
     git add 명령어를 사용하여 파일들을 스테이징 영역에 추가하는 함수
     :param path: git 저장소의 루트 디렉토리 경로
