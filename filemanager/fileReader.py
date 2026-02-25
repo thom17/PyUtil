@@ -16,6 +16,18 @@ def read_file(file_path: str) -> str:
         print(f"Error reading file {file_path}: {e}")
         return ""
 
+def get_encode(file_path: str) -> str:
+    '''
+    파일의 인코딩을 감지하여 반환
+    '''
+    try:
+        with open(file_path, 'rb') as file:
+            raw_data = file.read()
+        return chardet.detect(raw_data)['encoding']
+    except Exception as e:
+        print(f"Error detecting encoding for file {file_path}: {e}")
+        return ""
+
 def write_file(file_path: str, context : str, encode = None) -> str:
     '''
     파일을 읽어 문자열로 반환 (인코딩 인식 및 처리 포함)
