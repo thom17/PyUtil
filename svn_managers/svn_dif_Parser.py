@@ -41,6 +41,29 @@ class SvnDiffParseDatas:
         except Exception as e:
             return {"exception": str(e)}
 
+    @staticmethod
+    def GetDiffLocal(file_path: str) -> 'SvnDiffParseDatas':
+        '''
+        특정 리비전의 SvnDiffParser 생성
+        :param file_path:
+        :param revision_number:
+        :return:
+        '''
+        # SVN diff 명령어 실행
+        before_rv = int(revision_number) - 1
+        command = ["svn", "diff", file_path]
+        # print(" ".join(command))
+
+        try:
+            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            if result.returncode == 0:
+                # diff 결과를 dict로 파싱
+                return SvnDiffParseDatas(result.stdout, revision_number)
+            else:
+                return {"error": result.stderr}
+        except Exception as e:
+            return {"exception": str(e)}
 
     def __parse(self):
         current_file: Optional[FileChange] = None
